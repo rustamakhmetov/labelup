@@ -13,19 +13,29 @@ class UserLogic < BaseLogic
   validates :name, presence: true
   validates :email, presence: true
 
+  ALLOW_KINDS = [:advertiser]
+
   def method_missing(method, *args, &block)
-    if @user && [:id, :created_at].include?(method)
+    if [:id, :created_at].include?(method)
+      return nil unless @user
       @user.__send__(method, *args, &block)
     else
       super(method, *args, &block)
     end
   end
 
+  def self.create(params:)
+    klass = params.has_key?(:kind) ? make_klass(params[:kind]) : self
+    object = klass.new(params)
+    object.save
+    object
+  end
+
   def self.find(id)
     object = User.find(id)
     if object
       roleable = object.roleable
-      klass = "#{roleable.class.name}Logic".constantize
+      klass = make_klass(roleable)
       user = klass.new(object.attributes.merge(roleable.attributes))
       user.user = object
       user

@@ -37,7 +37,7 @@ RSpec.describe AdvertiserLogic, type: :model do
     end
   end
 
-  fdescribe "#persisted?" do
+  describe "#persisted?" do
     describe "with valid attributes" do
       let(:advertiser_params) { attributes_for(:user).merge(attributes_for(:advertiser)) }
       let(:advertiser) { AdvertiserLogic.new(advertiser_params) }

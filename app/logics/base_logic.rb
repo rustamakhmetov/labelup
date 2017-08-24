@@ -11,10 +11,14 @@ class BaseLogic
   # attribute :roleable_type, String
   # attribute :roleable_id, Integer
 
-  def self.create(**args)
-    object = self.new(args)
-    object.save
-    object
+  def self.make_klass(name)
+    name = name.to_s if name.is_a?(Symbol)
+    name = name.is_a?(String) ? name : name.class.name
+    klass = "#{name.capitalize}Logic".constantize
+  end
+
+  def self.create
+    raise InterfaceNotImplemented
   end
 
   def persisted?
