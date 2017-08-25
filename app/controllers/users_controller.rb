@@ -1,7 +1,7 @@
 class UsersController < ApplicationController
   include Errors::RescueError
 
-  before_action :load_user, only: %i(show update)
+  before_action :load_user, only: %i(show update destroy)
 
   def create
     @user = UserLogic.create(params: user_params)
@@ -22,6 +22,11 @@ class UsersController < ApplicationController
     else
       render json: { errors: @user.errors.full_messages }, status: 422
     end
+  end
+
+  def destroy
+    @user.destroy
+    head :ok
   end
 
   private

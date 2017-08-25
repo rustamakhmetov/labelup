@@ -145,4 +145,32 @@ RSpec.describe UsersController, type: :controller do
       end
     end
   end
+
+  describe 'DELETE /destroy' do
+    let!(:user_params) { attributes_for(:user)
+                             .merge(attributes_for(:advertiser)) }
+    let!(:advertiser) { AdvertiserLogic.create(params: user_params) }
+
+    context "with valid attributes" do
+      subject { delete :destroy, params:  { id: advertiser.id, format: :json } }
+
+      it "deletes advertiser" do
+        expect { subject }.to change(Advertiser, :count).by(-1)
+      end
+
+      it "deletes user" do
+        expect { subject }.to change(User, :count).by(-1)
+      end
+    end
+
+    context "with invalid attributes" do
+      context "advertiser not exists" do
+        it_behaves_like "UserController returns errors" do
+          subject { delete :destroy, params:  { id: 100, format: :json } }
+          let!(:errors) { ["User not exists"] }
+        end
+      end
+    end
+  end
+
 end

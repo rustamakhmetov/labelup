@@ -73,6 +73,15 @@ class UserLogic < BaseLogic
     self.save
   end
 
+  def destroy
+    User.transaction do
+      @user.destroy!
+      @user_role.destroy!
+    end
+  rescue ActiveRecord::RecordNotDestroyed
+    raise Errors::InternalServerError
+  end
+
   def integrity!
     raise Errors::UnprocessableEntity, "Violation of integrity" if @user.nil? ^ @user_role.nil?
   end
