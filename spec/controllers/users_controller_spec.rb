@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe UsersController, type: :controller do
 
-  describe "GET #show" do
+  describe "GET /show" do
     let(:advertiser_params) { attributes_for(:user).merge(attributes_for(:advertiser)) }
     let!(:advertiser) { AdvertiserLogic.create(params: advertiser_params) }
 
@@ -25,7 +25,7 @@ RSpec.describe UsersController, type: :controller do
 
   end
 
-  describe "POST #create" do
+  describe "POST /create" do
 
     describe "with valid attributes" do
       let!(:user_params) { attributes_for(:user)
@@ -104,4 +104,45 @@ RSpec.describe UsersController, type: :controller do
     end
   end
 
+  describe "PATCH /update" do
+    let!(:user_params) { attributes_for(:user)
+                             .merge(attributes_for(:advertiser)) }
+    let!(:advertiser) { AdvertiserLogic.create(params: user_params) }
+
+
+    context 'with valid attributes' do
+      subject { patch :update, params:  { user: {name: "New name", position: "New position" },
+                                          id: advertiser.id, format: :json } }
+
+      it 'assigns the requested advertiser to @user' do
+        subject
+        expect(assigns(:user).id).to eq advertiser.id
+      end
+
+      it 'change advertiser attributes' do
+        subject
+        advertiser.reload
+        expect(advertiser.name).to eq 'New name'
+        expect(advertiser.position).to eq 'New position'
+      end
+    end
+
+    context "with invalid attributes" do
+      context "advertiser not exists" do
+        it_behaves_like "UserController returns errors" do
+          subject { patch :update, params:  { user: {name: "New name", position: "New position" },
+                                              id: 100, format: :json } }
+          let!(:errors) { ["User not exists"] }
+        end
+      end
+
+      context "required fields are not filled" do
+        it_behaves_like "UserController returns errors" do
+          subject { patch :update, params:  { user: {name: "", position: "" },
+                                              id: advertiser.id, format: :json } }
+          let!(:errors) { ["Name can't be blank", "Position can't be blank"]}
+        end
+      end
+    end
+  end
 end

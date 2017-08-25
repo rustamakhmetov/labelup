@@ -7,10 +7,6 @@ class BaseLogic
   include ActiveModel::Conversion
   include ActiveModel::Validations
 
-  # attribute :id, Integer
-  # attribute :roleable_type, String
-  # attribute :roleable_id, Integer
-
   def self.make_klass(name)
     name = name.to_s if name.is_a?(Symbol)
     name = name.is_a?(String) ? name : name.class.name
@@ -19,6 +15,10 @@ class BaseLogic
 
   def self.create
     raise InterfaceNotImplemented
+  end
+
+  def self.attributes
+    self.attribute_set.instance_variable_get(:@attributes).map(&:name)
   end
 
   def persisted?
@@ -32,6 +32,10 @@ class BaseLogic
     else
       false
     end
+  end
+
+  def to_kind
+    raise InterfaceNotImplemented
   end
 
   protected

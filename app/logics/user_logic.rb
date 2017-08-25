@@ -4,12 +4,11 @@ class UserLogic < BaseLogic
   attribute :phone, String
   attribute :password, String
 
-  # attribute :password_digest, String
-  # attribute :token, String
+  attr_reader :user_role
 
-  attr_accessor :user
-
-  validates :password, presence: true
+  validates_each :password, presence: true do |record, attr, value|
+    record.errors.add attr, "can't be blank" if record.user.nil? && value.nil?
+  end
   validates :name, presence: true
   validates :email, presence: true
 
@@ -32,14 +31,50 @@ class UserLogic < BaseLogic
   end
 
   def self.find(id)
-    object = User.find(id)
-    if object
-      roleable = object.roleable
-      klass = make_klass(roleable)
-      user = klass.new(object.attributes.merge(roleable.attributes))
-      user.user = object
-      user
+    object = User.find_by_id(id)
+    raise Errors::UnprocessableEntity, "User not exists" unless object
+
+    roleable = object.roleable
+    klass = make_klass(roleable)
+    user = klass.new(object.attributes.merge(roleable.attributes))
+    user.user = object
+    user
+  end
+
+  def user=(value)
+    @user = value
+    @user_role = @user.roleable if @user
+    integrity!
+  end
+
+  def user
+    @user
+  end
+
+  def reload
+    if @user
+      @user.reload
+      @user_role.reload
+      self.attributes = @user.attributes.merge(@user_role.attributes)
     end
+  end
+
+  def persisted?
+    !!(@user.try(:persisted?) && @user_role.try(:persisted?))
+  end
+
+  def save
+    raise InterfaceNotImplemented if self.class == UserLogic
+    super
+  end
+
+  def update(params)
+    self.attributes = params
+    self.save
+  end
+
+  def integrity!
+    raise Errors::UnprocessableEntity, "Violation of integrity" if @user.nil? ^ @user_role.nil?
   end
 
   def to_json(options = nil)
@@ -49,6 +84,20 @@ class UserLogic < BaseLogic
   protected
 
   def persist!
-    raise InterfaceNotImplemented
+    User.transaction do
+      if @user
+        @user.update(attributes_by(self.class.superclass))
+        @user_role.update(attributes_by(self.class))
+      else
+        @user_role = Advertiser.create(attributes_by(self.class))
+        @user = User.create(attributes_by(self.class.superclass).merge(roleable: @user_role))
+      end
+    end
+  end
+
+  private
+
+  def attributes_by(klass)
+    self.attributes.slice(*klass.attributes).compact
   end
 end

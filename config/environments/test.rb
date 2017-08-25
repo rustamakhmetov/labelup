@@ -43,4 +43,6 @@ Rails.application.configure do
       host: 'localhost',
       port: 3000
   }
+
+  #config.logger = Logger.new(STDOUT)
 end

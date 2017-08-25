@@ -1,7 +1,7 @@
 class UsersController < ApplicationController
   include Errors::RescueError
 
-  before_action :load_user, only: %i(show)
+  before_action :load_user, only: %i(show update)
 
   def create
     @user = UserLogic.create(params: user_params)
@@ -16,6 +16,14 @@ class UsersController < ApplicationController
     render json: @user.to_json
   end
 
+  def update
+    if @user.update(user_params)
+      render json: @user.to_json
+    else
+      render json: { errors: @user.errors.full_messages }, status: 422
+    end
+  end
+
   private
 
   def load_user
@@ -24,7 +32,7 @@ class UsersController < ApplicationController
 
   def user_params
     begin
-      kind = params[:user][:kind].to_sym
+      kind = @user ? @user.to_kind : params[:user][:kind].to_sym
       raise Errors::UnprocessableEntity, "Unknown user kind" unless UserLogic::ALLOW_KINDS.include?(kind)
       attrs = [:email, :phone, :name, :password, :kind]
       attrs << [:organization, :position] if kind == :advertiser
