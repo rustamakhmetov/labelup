@@ -4,8 +4,4 @@ class AdvertiserLogic < UserLogic
 
   validates :organization, presence: true
   validates :position, presence: true
-
-  def to_kind
-    :advertiser
-  end
 end

@@ -36,4 +36,54 @@ RSpec.describe UserLogic, type: :model do
       end
     end
   end
+
+  describe ".to_kind" do
+    describe "with valid attributes" do
+      it "kind :advertiser" do
+        expect(AdvertiserLogic.to_kind).to eq :advertiser
+      end
+
+      it "klass as parameter" do
+        expect(UserLogic.to_kind(AdvertiserLogic)).to eq :advertiser
+      end
+    end
+
+    describe "with invalid attributes" do
+      it "invalid class name" do
+        class Unknow < UserLogic; end
+        expect(Unknow.to_kind).to eq nil
+      end
+    end
+  end
+
+  describe "#to_kind" do
+    describe "with valid attributes" do
+      it "AdvertiserLogic" do
+        expect(AdvertiserLogic.new.to_kind).to eq :advertiser
+      end
+
+      it "AdministratorLogic" do
+        class AdministratorLogic < UserLogic; end
+        expect(AdministratorLogic.new.to_kind).to eq :administrator
+      end
+    end
+
+    describe "with invalid attributes" do
+      it "invalid class name" do
+        class Unknow < UserLogic; end
+        expect(Unknow.new.to_kind).to eq nil
+      end
+    end
+  end
+
+  describe ".allow_kinds" do
+    it "returns array of kinds" do
+      class AdministratorLogic < UserLogic; end
+      class Invalid < UserLogic; end
+      # with active 'focus: true [fit]' the test is failed
+      expect(UserLogic.allow_kinds).to match_array([:administrator, :advertiser])
+    end
+  end
+
+
 end

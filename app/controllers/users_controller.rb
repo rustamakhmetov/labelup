@@ -38,10 +38,8 @@ class UsersController < ApplicationController
   def user_params
     begin
       kind = @user ? @user.to_kind : params[:user][:kind].to_sym
-      raise Errors::UnprocessableEntity, "Unknown user kind" unless UserLogic::ALLOW_KINDS.include?(kind)
-      attrs = [:email, :phone, :name, :password, :kind]
-      attrs << [:organization, :position] if kind == :advertiser
-      params.require(:user).permit(attrs)
+      raise Errors::UnprocessableEntity, "Unknown user kind" unless UserLogic::allow_kinds.include?(kind)
+      params.require(:user).permit(UserLogic.merge_attributes_by_kind(kind).push(:kind))
     rescue Errors::UnprocessableEntity => e
       raise Errors::UnprocessableEntity, e.message
     rescue

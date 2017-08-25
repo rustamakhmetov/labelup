@@ -12,8 +12,6 @@ class UserLogic < BaseLogic
   validates :name, presence: true
   validates :email, presence: true
 
-  ALLOW_KINDS = [:advertiser]
-
   def method_missing(method, *args, &block)
     if [:id, :created_at].include?(method)
       return nil unless @user
@@ -21,6 +19,25 @@ class UserLogic < BaseLogic
     else
       super(method, *args, &block)
     end
+  end
+
+  def self.allow_kinds
+    UserLogic.descendants.map(&:to_kind).compact
+  end
+
+  def self.to_kind(klass=nil)
+    klass_name = (klass ? klass : self).name
+    return nil unless klass_name=~ /logic$/i
+    klass_name.remove('logic', /logic$/i).downcase.to_sym
+  end
+
+  def self.merge_attributes(klass)
+    (UserLogic.attributes << klass.attributes).flatten!
+  end
+
+  def self.merge_attributes_by_kind(kind)
+    klass = UserLogic.descendants.select {|x| x.to_kind == kind}.first
+    self.merge_attributes(klass)
   end
 
   def self.create(params:)
@@ -88,6 +105,10 @@ class UserLogic < BaseLogic
 
   def to_json(options = nil)
    self.attributes.compact.to_json(options)
+  end
+
+  def to_kind
+    self.class.to_kind
   end
 
   protected
